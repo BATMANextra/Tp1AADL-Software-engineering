@@ -1,0 +1,132 @@
+package Cruise
+public
+ -- Define data types
+  data Speed
+  end Speed;
+
+  data Voltage
+  end Voltage;
+
+  -- Define system
+  system CruiseControl
+  end CruiseControl;
+
+  system implementation CruiseControl.impl
+    subcomponents
+      wheel: process Wheel;
+      throttle: process Throttle;
+      command: process Command;
+      display: process Display;
+      speed: process Speed1;
+    connections
+      wheel_to_speed: port wheel.tours_per_period -> speed.speed;
+      speed_to_display : port speed.speed1 -> display.speed;
+      throttle_to_command_speed: port throttle.actual_speed -> command.speed;
+      command_to_throttle_speed: port command.speed -> throttle.required_speed;
+      throttle_to_command_voltage: port throttle.voltage -> command.voltage;
+      command_to_throttle_voltage: port command.voltage -> throttle.voltage;
+      throttle_to_display: port throttle.actual_speed -> display.speed;
+  end CruiseControl.impl;
+
+  -- Define Wheel process
+  process Wheel
+  features
+    tours_per_period: out data port Speed;
+  end Wheel;
+
+  process implementation Wheel.impl
+    subcomponents
+      wheel_thread: thread WheelThread;
+    end Wheel.impl;
+
+  thread WheelThread
+  features
+    tours_per_period: out data port Speed;
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 50 ms;
+  end WheelThread;
+
+  -- Define Throttle process
+  process Throttle
+  features
+    required_speed: in data port Speed;
+    actual_speed: out data port Speed;
+    voltage: in data port Voltage;
+  end Throttle;
+
+  process implementation Throttle.impl
+    subcomponents
+      throttle_thread: thread ThrottleThread;
+    end Throttle.impl;
+
+  thread ThrottleThread
+  features
+    required_speed: in data port Speed;
+    actual_speed: out data port Speed;
+    voltage: in data port Voltage;
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 50 ms;
+  end ThrottleThread;
+
+  -- Define Command process
+  process Command
+  features
+    speed: in data port Speed;
+    voltage: out data port Voltage;
+  end Command;
+
+  process implementation Command.impl
+    subcomponents
+      command_thread: thread CommandThread;
+    end Command.impl;
+
+  thread CommandThread
+  features
+    speed: in data port Speed;
+    voltage: out data port Voltage;
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 10 ms;
+  end CommandThread;
+
+  -- Define Display process
+  process Display
+  features
+    speed: in data port Speed;
+  end Display;
+
+  process implementation Display.impl
+    subcomponents
+      display_thread: thread DisplayThread;
+    end Display.impl;
+
+  thread DisplayThread
+  features
+    speed: in data port Speed;
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 50 ms;
+  end DisplayThread;
+  
+  process Speed1
+  	features
+  		speed : in data port;
+  		speed1 : out data port;
+  end Speed1;
+  
+  process implementation Speed1.impl
+  	subcomponents
+  		speed_thread : thread SpeedThread;
+  end Speed1.impl;
+  
+  thread SpeedThread
+  	features
+  		speed : in data port Speed;
+  		properties
+  			Dispatch_Protocol => Periodic;
+  			Period => 20 ms;
+  end SpeedThread;
+
+end Cruise;
